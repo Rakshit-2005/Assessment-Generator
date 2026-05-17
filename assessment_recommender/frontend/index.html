@@ -40,11 +40,11 @@
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({jd, top, use_embeddings})
         });
+        const text = await res.text();
         let data;
         try {
-          data = await res.json();
+          data = JSON.parse(text);
         } catch (_) {
-          const text = await res.text();
           throw new Error(text || 'Request failed');
         }
         if (!res.ok) throw new Error(data.detail || 'Request failed');
@@ -65,11 +65,11 @@
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({jd})
         });
+        const text = await res.text();
         let data;
         try {
-          data = await res.json();
+          data = JSON.parse(text);
         } catch (_) {
-          const text = await res.text();
           throw new Error(text || 'Request failed');
         }
         if (!res.ok) throw new Error(data.detail || 'Request failed');

@@ -30,8 +30,8 @@ def generate_assessment(jd: str, model: Optional[str] = None, max_length: int = 
     if not HF_TOKEN:
         raise RuntimeError('HF_API_TOKEN not set')
     model = model or DEFAULT_MODEL
-    # Use the standard model endpoint; flan-t5 is text2text and not a text-generation pipeline.
-    endpoint = f'https://api-inference.huggingface.co/models/{model}'
+    # Use text2text-generation pipeline endpoint for flan-t5.
+    endpoint = f'https://api-inference.huggingface.co/pipeline/text2text-generation/{model}'
     headers = {'Authorization': f'Bearer {HF_TOKEN}', 'Content-Type': 'application/json'}
     prompt = _make_prompt(jd)
     payload = {
