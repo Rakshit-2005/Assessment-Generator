@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>SHL Assessment Recommender</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 24px auto; }
+    textarea { width: 100%; height: 140px; }
+    pre { background:#f6f6f6; padding:10px }
+  </style>
+</head>
+<body>
+  <h2>SHL Assessment Recommender</h2>
+  <p>Paste a job description (JD) and click Recommend.</p>
+  <textarea id="jd">Senior backend engineer with Core Java, Spring, SQL, AWS, Docker</textarea>
+  <div style="margin-top:8px">
+    <label>Top N: <input id="top" value="8" style="width:60px"/></label>
+    <label style="margin-left:12px"><input type="checkbox" id="emb" checked/> Use embeddings if available</label>
+    <button id="go">Recommend</button>
+    <button id="gen" style="margin-left:8px">Generate Assessment</button>
+  </div>
+  <hr/>
+  <div id="out"></div>
+  <hr/>
+  <div>
+    <h3>Generated Assessment</h3>
+    <div id="genout"><i>Not generated yet.</i></div>
+  </div>
+
+  <script>
+    const out = document.getElementById('out');
+    document.getElementById('go').onclick = async () => {
+      out.innerHTML = 'Loading...';
+      const jd = document.getElementById('jd').value;
+      const top = parseInt(document.getElementById('top').value || '8', 10);
+      const use_embeddings = document.getElementById('emb').checked;
+      try {
+        const res = await fetch('http://127.0.0.1:8000/recommend', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({jd, top, use_embeddings})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Request failed');
+        if (data.count === 0) out.innerHTML = '<i>No recommendations</i>';
+        else {
+          out.innerHTML = data.results.map((r,i)=>`<div><b>${i+1}. ${r.name}</b> (${r.score})<br/>${r.keys?r.keys.join(', '):''}<br/><a href="${r.link}" target="_blank">Link</a> | ${r.duration || 'n/a'} | ${r.languages? r.languages.join(', '):''}</div><hr/>`).join('')
+        }
+      } catch (e) {
+        out.innerHTML = '<pre>'+e.toString()+'</pre>';
+      }
+    };
+    document.getElementById('gen').onclick = async () => {
+      const genout = document.getElementById('genout');
+      genout.innerHTML = 'Generating...';
+      const jd = document.getElementById('jd').value;
+      try {
+        const res = await fetch('http://127.0.0.1:8000/generate', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({jd})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Request failed');
+        // pretty-print generated JSON
+        genout.innerHTML = '<pre>' + JSON.stringify(data.generated, null, 2) + '</pre>';
+      } catch (e) {
+        genout.innerHTML = '<pre>'+e.toString()+'</pre>';
+      }
+    };
+  </script>
+</body>
+</html>
