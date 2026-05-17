@@ -1,0 +1,18 @@
+# Backend
+fastapi
+uvicorn[standard]
+
+# Optional (better matching) - embeddings fallback
+sentence-transformers
+scikit-learn
+huggingface-hub
+requests
+python-dotenv
+transformers
+torch
+accelerate
+
+# Lightweight, optional NLP helper (rule-based parsing; no model required)
+# spaCy is optional if you want more advanced parsing: `pip install spacy` and
+# `python -m spacy download en_core_web_sm`
+
