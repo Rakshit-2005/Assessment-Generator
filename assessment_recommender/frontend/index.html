@@ -40,7 +40,13 @@
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({jd, top, use_embeddings})
         });
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch (_) {
+          const text = await res.text();
+          throw new Error(text || 'Request failed');
+        }
         if (!res.ok) throw new Error(data.detail || 'Request failed');
         if (data.count === 0) out.innerHTML = '<i>No recommendations</i>';
         else {
@@ -59,7 +65,13 @@
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({jd})
         });
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch (_) {
+          const text = await res.text();
+          throw new Error(text || 'Request failed');
+        }
         if (!res.ok) throw new Error(data.detail || 'Request failed');
         // pretty-print generated JSON
         genout.innerHTML = '<pre>' + JSON.stringify(data.generated, null, 2) + '</pre>';

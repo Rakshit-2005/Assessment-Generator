@@ -30,7 +30,8 @@ def generate_assessment(jd: str, model: Optional[str] = None, max_length: int = 
     if not HF_TOKEN:
         raise RuntimeError('HF_API_TOKEN not set')
     model = model or DEFAULT_MODEL
-    endpoint = f'https://api-inference.huggingface.co/pipeline/text-generation/{model}'
+    # Use the standard model endpoint; flan-t5 is text2text and not a text-generation pipeline.
+    endpoint = f'https://api-inference.huggingface.co/models/{model}'
     headers = {'Authorization': f'Bearer {HF_TOKEN}', 'Content-Type': 'application/json'}
     prompt = _make_prompt(jd)
     payload = {
@@ -41,9 +42,14 @@ def generate_assessment(jd: str, model: Optional[str] = None, max_length: int = 
     if resp.status_code != 200:
         raise RuntimeError(f'HF generation failed: {resp.status_code} {resp.text}')
     data = resp.json()
-    # The HF Inference API may return [{'generated_text': '...'}] or plain text; handle both.
-    if isinstance(data, list) and data and isinstance(data[0], dict) and 'generated_text' in data[0]:
-        text = data[0]['generated_text']
+    # The HF Inference API may return [{'generated_text': '...'}] or [{'summary_text': '...'}].
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        if 'generated_text' in data[0]:
+            text = data[0]['generated_text']
+        elif 'summary_text' in data[0]:
+            text = data[0]['summary_text']
+        else:
+            text = json.dumps(data[0])
     elif isinstance(data, dict) and 'generated_text' in data:
         text = data['generated_text']
     else:
