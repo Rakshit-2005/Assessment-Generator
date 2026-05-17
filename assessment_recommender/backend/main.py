@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from pathlib import Path
+import os
 
 # load .env located at the assessment_recommender root (one level up from backend)
 here = Path(__file__).resolve().parent.parent
@@ -20,16 +21,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from catalog_loader import load_catalog
 from recommender import Recommender
+
+# Avoid loading large local models on constrained platforms (e.g., Render free tier).
+DISABLE_LOCAL_GEN = os.getenv('DISABLE_LOCAL_GEN') == '1' or os.getenv('RENDER') is not None
+DISABLE_EMBEDDINGS = os.getenv('DISABLE_EMBEDDINGS') == '1' or os.getenv('RENDER') is not None
 try:
     from hf_generator import generate_assessment
     HF_GEN_AVAILABLE = True
 except Exception:
     HF_GEN_AVAILABLE = False
-try:
-    from local_generator import generate_assessment_local
-    LOCAL_GEN_AVAILABLE = True
-except Exception:
+if DISABLE_LOCAL_GEN:
     LOCAL_GEN_AVAILABLE = False
+else:
+    try:
+        from local_generator import generate_assessment_local
+        LOCAL_GEN_AVAILABLE = True
+    except Exception:
+        LOCAL_GEN_AVAILABLE = False
 
 app = FastAPI(title='SHL Assessment Recommender')
 
@@ -58,7 +66,7 @@ class GenerateRequest(BaseModel):
 def startup_event():
     # load catalog once
     app.state.catalog = load_catalog()
-    app.state.recommender = Recommender(app.state.catalog, use_embeddings=True)
+    app.state.recommender = Recommender(app.state.catalog, use_embeddings=not DISABLE_EMBEDDINGS)
     # session storage for simple chat flows
     app.state.chat_sessions = {}
 
@@ -79,7 +87,7 @@ def recommend(req: RecommendRequest):
     if not req.jd or not req.jd.strip():
         raise HTTPException(status_code=400, detail='JD text required')
     # optionally rebuild recommender with/without embeddings
-    if req.use_embeddings and not app.state.recommender.use_embeddings:
+    if req.use_embeddings and not DISABLE_EMBEDDINGS and not app.state.recommender.use_embeddings:
         # try to enable embeddings
         app.state.recommender = Recommender(app.state.catalog, use_embeddings=True)
     results = app.state.recommender.recommend(req.jd, top_n=req.top or 8)
