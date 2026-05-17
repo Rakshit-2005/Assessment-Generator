@@ -43,15 +43,15 @@ Environment / secrets
 ---------------------
 - The repository includes `assessment_recommender/.env` but the `HF_API_TOKEN` value is intentionally blank to avoid committing secrets. Set your HF token in your shell when needed instead of placing it in the file.
 
-	PowerShell:
-	```powershell
-	$env:HF_API_TOKEN="hf_your_token_here"
-	```
+  PowerShell:
+  ```powershell
+  $env:HF_API_TOKEN="hf_your_token_here"
+  ```
 
-	Bash:
-	```bash
-	export HF_API_TOKEN="hf_your_token_here"
-	```
+  Bash:
+  ```bash
+  export HF_API_TOKEN="hf_your_token_here"
+  ```
 
 Running the server (recommended)
 -------------------------------
@@ -68,4 +68,3 @@ Frontend
 Security note
 -------------
 - Never commit API keys to the repository. If you accidentally committed a key, rotate it immediately and remove it from history. I can help remove keys from git history if needed.
-
